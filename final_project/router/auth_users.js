@@ -47,13 +47,34 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
     return res.status(400).json({ message: "Invalid request" });
   }
   if (books[isbn]) {
-    books[isbn].reviews = { ...books[isbn].review, [username]: review };
+    books[isbn].reviews = { ...books[isbn].reviews, [username]: review };
     return res
       .status(200)
       .json({
         message: "Review added successfully",
         review: books[isbn].reviews,
       });
+  } else {
+    return res.status(404).json({ message: "Book not found" });
+  }
+});
+
+// delete a book review
+regd_users.delete("/auth/review/:isbn", (req, res) => {
+  const { isbn } = req.params;
+  const token = req.session.authorization["accessToken"];
+  jwt.verify(token, "access", (err, user) => {
+    if (err) {
+      return res.status(403).json({ message: "User not authenticated" });
+    }
+  });
+  const { username } = jwt.decode(token);
+  if (!isbn) {
+    return res.status(400).json({ message: "Invalid request" });
+  }
+  if (books[isbn]) {
+    delete books[isbn].reviews[username];
+    return res.status(200).json({ message: "Review deleted successfully" });
   } else {
     return res.status(404).json({ message: "Book not found" });
   }
